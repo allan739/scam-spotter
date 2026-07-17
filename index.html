@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scam Spotter — Trust Your Gut</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1F5F5B">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Scam Spotter">
+<style>
+  :root{
+    --bg: #F2F5F1;
+    --panel: #FFFFFF;
+    --ink: #24322E;
+    --ink-soft: #56645F;
+    --teal: #1F5F5B;
+    --teal-dark: #16403D;
+    --amber: #E0A458;
+    --brick: #C1443C;
+    --brick-dark: #9C332D;
+    --forest: #3A7D44;
+    --forest-dark: #2A5C32;
+    --border: #DCE3DE;
+    --shadow: 0 10px 30px rgba(31, 95, 91, 0.10);
+    --radius: 18px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Source Serif Pro", Georgia, "Iowan Old Style", serif;
+    min-height: 100vh;
+  }
+
+  .sans{
+    font-family: "Public Sans", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+
+  .wrap{
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+
+  header{
+    text-align:center;
+    margin-bottom: 28px;
+  }
+
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    background: var(--teal);
+    color: white;
+    padding: 8px 18px;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  h1{
+    font-size: clamp(2.1rem, 5vw, 2.9rem);
+    margin: 18px 0 8px;
+    color: var(--teal-dark);
+    line-height: 1.15;
+  }
+
+  .subtitle{
+    color: var(--ink-soft);
+    font-size: 1.15rem;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  /* ---- Progress dial (signature element) ---- */
+  .dial-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap: 22px;
+    margin: 26px 0 8px;
+  }
+  .dial{
+    position:relative;
+    width: 84px;
+    height: 84px;
+  }
+  .dial svg{ transform: rotate(-90deg); }
+  .dial-track{ fill:none; stroke: var(--border); stroke-width: 9; }
+  .dial-fill{
+    fill:none; stroke: var(--forest); stroke-width: 9; stroke-linecap: round;
+    transition: stroke-dashoffset 0.6s ease, stroke 0.4s ease;
+  }
+  .dial-label{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family: "Public Sans", sans-serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--teal-dark);
+  }
+  .progress-text{
+    font-family: "Public Sans", sans-serif;
+    color: var(--ink-soft);
+    font-size: 1rem;
+  }
+  .progress-text strong{ color: var(--teal-dark); }
+
+  /* ---- Card ---- */
+  .card{
+    background: var(--panel);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    padding: 34px 30px;
+    margin-top: 18px;
+  }
+
+  .eyebrow{
+    font-family: "Public Sans", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.8rem;
+    color: var(--amber);
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .scenario{
+    font-size: clamp(1.25rem, 3vw, 1.55rem);
+    line-height: 1.5;
+    color: var(--ink);
+    margin: 0 0 26px;
+  }
+
+  .choices{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 520px){
+    .choices{ grid-template-columns: 1fr; }
+  }
+
+  .choice-btn{
+    font-family: "Public Sans", sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    padding: 20px 16px;
+    border-radius: 14px;
+    border: 2px solid var(--border);
+    background: #FBFCFB;
+    color: var(--ink);
+    cursor: pointer;
+    transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+    display:flex;
+    flex-direction: column;
+    align-items:center;
+    gap: 6px;
+  }
+  .choice-btn .emoji{ font-size: 1.6rem; }
+  .choice-btn:hover{ transform: translateY(-2px); border-color: var(--teal); }
+  .choice-btn:focus-visible{ outline: 3px solid var(--teal); outline-offset: 2px; }
+  .choice-btn:disabled{ cursor: default; transform:none; }
+
+  .choice-btn.scam-btn:hover{ background: #FBEDEC; }
+  .choice-btn.safe-btn:hover{ background: #EDF6EE; }
+
+  .choice-btn.correct{ background: #E7F4E8; border-color: var(--forest); color: var(--forest-dark); }
+  .choice-btn.incorrect{ background: #FBEAE9; border-color: var(--brick); color: var(--brick-dark); }
+  .choice-btn.dim{ opacity: 0.45; }
+
+  /* ---- Feedback ---- */
+  .feedback{
+    margin-top: 24px;
+    padding: 20px 22px;
+    border-radius: 14px;
+    border-left: 6px solid var(--forest);
+    background: #F1F8F1;
+    display:none;
+  }
+  .feedback.show{ display:block; }
+  .feedback.wrong-flavor{ border-left-color: var(--brick); background: #FCF1F0; }
+
+  .feedback-title{
+    font-family: "Public Sans", sans-serif;
+    font-weight: 800;
+    font-size: 1.05rem;
+    margin: 0 0 8px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .feedback-title.good{ color: var(--forest-dark); }
+  .feedback-title.bad{ color: var(--brick-dark); }
+  .feedback p{ margin: 0; line-height: 1.55; color: var(--ink); font-size: 1.05rem; }
+
+  .next-row{
+    margin-top: 22px;
+    display:flex;
+    justify-content:flex-end;
+  }
+  .next-btn{
+    font-family: "Public Sans", sans-serif;
+    background: var(--teal);
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    display:none;
+  }
+  .next-btn.show{ display:inline-block; }
+  .next-btn:hover{ background: var(--teal-dark); }
+  .next-btn:focus-visible{ outline: 3px solid var(--amber); outline-offset: 2px; }
+
+  /* ---- Results ---- */
+  .results{ display:none; text-align:center; }
+  .results.show{ display:block; }
+  .results-score{
+    font-family:"Public Sans", sans-serif;
+    font-size: 3.4rem;
+    font-weight: 800;
+    color: var(--teal-dark);
+    margin: 6px 0 2px;
+  }
+  .results-out-of{
+    font-family:"Public Sans", sans-serif;
+    color: var(--ink-soft);
+    font-size: 1.1rem;
+    margin-bottom: 18px;
+  }
+  .results-msg{
+    font-size: 1.2rem;
+    line-height: 1.55;
+    max-width: 480px;
+    margin: 0 auto 24px;
+  }
+  .best-note{
+    font-family:"Public Sans", sans-serif;
+    color: var(--amber);
+    font-weight: 700;
+    margin-bottom: 22px;
+    font-size: 1rem;
+  }
+  .restart-btn{
+    font-family: "Public Sans", sans-serif;
+    background: var(--amber);
+    color: #3A2A0E;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .restart-btn:hover{ filter: brightness(0.96); }
+
+  footer{
+    text-align:center;
+    margin-top: 30px;
+    color: var(--ink-soft);
+    font-family: "Public Sans", sans-serif;
+    font-size: 0.9rem;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="badge sans">🛡️ Scam Spotter</span>
+    <h1>Is it a scam — or is it safe?</h1>
+    <p class="subtitle sans">Read each situation and decide. You'll get a clear explanation after every answer, so you learn the warning signs as you go.</p>
+  </header>
+
+  <div class="dial-row">
+    <div class="dial">
+      <svg width="84" height="84" viewBox="0 0 84 84">
+        <circle class="dial-track" cx="42" cy="42" r="36"></circle>
+        <circle id="dialFill" class="dial-fill" cx="42" cy="42" r="36"
+                stroke-dasharray="226.2" stroke-dashoffset="226.2"></circle>
+      </svg>
+      <div class="dial-label" id="dialLabel">0/0</div>
+    </div>
+    <div class="progress-text">Question <strong id="qNum">1</strong> of <strong id="qTotal">10</strong></div>
+  </div>
+
+  <div class="card" id="quizCard">
+    <div class="eyebrow">Real-life situation</div>
+    <p class="scenario" id="scenarioText">Loading...</p>
+
+    <div class="choices">
+      <button class="choice-btn scam-btn sans" id="btnScam">
+        <span class="emoji">🚩</span> It's a SCAM
+      </button>
+      <button class="choice-btn safe-btn sans" id="btnSafe">
+        <span class="emoji">✅</span> It's SAFE
+      </button>
+    </div>
+
+    <div class="feedback" id="feedback">
+      <p class="feedback-title" id="feedbackTitle"></p>
+      <p id="feedbackText"></p>
+    </div>
+
+    <div class="next-row">
+      <button class="next-btn" id="nextBtn">Next question →</button>
+    </div>
+  </div>
+
+  <div class="card results" id="resultsCard">
+    <div class="eyebrow">Your results</div>
+    <div class="results-score sans" id="finalScore">0</div>
+    <div class="results-out-of sans" id="finalOutOf">out of 10 correct</div>
+    <p class="results-msg" id="finalMsg"></p>
+    <p class="best-note" id="bestNote"></p>
+    <button class="restart-btn" id="restartBtn">Try Again</button>
+  </div>
+
+  <footer>Practicing here won't cost you anything — real scammers will always try to rush you. Take your time.</footer>
+</div>
+
+<script>
+const questions = [
+  {
+    text: "You get a phone call from someone saying they're from Microsoft. They say your computer sent them a virus warning, and they need remote access to your computer right now to fix it.",
+    isScam: true,
+    explain: "Real tech companies never call you out of the blue about a virus on your computer. This is one of the most common scams — once they get remote access, they can steal your information or your money. Just hang up."
+  },
+  {
+    text: "You get an email from your bank saying there was 'suspicious activity' on your account, with a link to 'verify your identity immediately' or your account will be frozen in 24 hours.",
+    isScam: true,
+    explain: "The urgency and the link are both red flags. Instead of clicking the link, close the email and call your bank directly using the number on the back of your card — never a number or link from the email itself."
+  },
+  {
+    text: "Your grandchild calls, sounding upset, saying they're in jail in another state and need you to wire bail money right away — and to please not tell their parents.",
+    isScam: true,
+    explain: "This is called the 'grandparent scam.' Scammers use urgency and secrecy to stop you from checking the story. Hang up and call your grandchild or their parents directly using a number you already have, before sending anything."
+  },
+  {
+    text: "You receive a letter in the mail saying you've won a $2 million sweepstakes, but you need to first pay a small 'processing fee' by gift card to release the winnings.",
+    isScam: true,
+    explain: "Real prizes never require you to pay money first — and legitimate organizations never ask to be paid in gift cards. That's a scammer's favorite payment method because it's nearly impossible to trace or reverse."
+  },
+  {
+    text: "You place an order on a well-known retailer's official website, and a few days later you get an email confirming shipment with a tracking number that matches your order.",
+    isScam: false,
+    explain: "This is a normal part of online shopping. As long as you went directly to the retailer's real website yourself (not through a random link) and the email matches an order you actually placed, this is safe."
+  },
+  {
+    text: "Someone you've been chatting with for months on a dating app, who you've never met in person, says they urgently need money for a medical emergency and asks you to send it via wire transfer.",
+    isScam: true,
+    explain: "This is a romance scam. A pattern of a genuine online relationship followed by a sudden, urgent request for money — especially before ever meeting in person — is a major warning sign."
+  },
+  {
+    text: "You get a text message from your phone carrier reminding you that your monthly bill is due soon, and it directs you to log in through the carrier's official app to pay.",
+    isScam: false,
+    explain: "A routine bill reminder that points you to your carrier's own app (not an unfamiliar link) is a normal, safe notification. When in doubt, you can always open the app yourself instead of tapping any link."
+  },
+  {
+    text: "A caller claims to be from the Social Security Administration and says your Social Security number has been 'suspended due to suspicious activity,' and you must confirm your number and pay a fee to reactivate it.",
+    isScam: true,
+    explain: "Social Security numbers are never 'suspended,' and the government will never call demanding payment over the phone. Hang up and, if worried, contact the SSA directly using the number on their official website."
+  },
+  {
+    text: "You get a pop-up on your computer screen with a loud alarm sound saying 'Your computer is infected! Call this number immediately for support.'",
+    isScam: true,
+    explain: "This is a fake tech-support pop-up. Real antivirus warnings never include a phone number to call. Don't call it — just close the browser window entirely, or restart your computer if it won't close."
+  },
+  {
+    text: "A family member sends you a calendar invite for a video call to catch up next weekend, using the same email address they've always used.",
+    isScam: false,
+    explain: "A calendar invite from a known, familiar email address for an ordinary family catch-up is completely normal. The key thing to check is always whether the sender is who you expect."
+  },
+  {
+    text: "You get a text message: 'Amazon: We could not deliver your package. Please confirm your address within 24 hours or it will be returned.' It includes a link that isn't amazon.com.",
+    isScam: true,
+    explain: "Amazon doesn't text links asking you to 'confirm your address' to save a delivery — and the link doesn't even go to amazon.com. Don't tap it. If you're worried about a real order, open the Amazon app yourself and check your orders directly."
+  },
+  {
+    text: "You get a phone call from someone saying they're from Amazon, warning that a $799 charge for a MacBook just went through on your account, and that to 'cancel it' they need your card number to verify your identity.",
+    isScam: true,
+    explain: "Amazon will never call you asking for your card number to 'cancel' a charge. This is designed to scare you into acting fast. Hang up and check your actual Amazon order history and bank statement yourself — real charges (or lack of them) will be right there."
+  },
+  {
+    text: "You place an order through the official Amazon app, and the next day you get a notification in the same app showing your package is out for delivery, with a tracking link inside the app itself.",
+    isScam: false,
+    explain: "A delivery update inside the official Amazon app, matching an order you actually placed, is completely normal. The safest habit is always checking order status inside the app or website directly instead of clicking links from texts or emails."
+  },
+  {
+    text: "You get an email that looks like it's from PayPal saying 'You've received $500 — click here to claim it,' even though you weren't expecting any payment.",
+    isScam: true,
+    explain: "An unexpected 'you've got money, click to claim it' message is a classic phishing setup — the link usually leads to a fake login page designed to steal your PayPal password. If you're ever unsure, log into PayPal directly through the app or website, never through an email link."
+  },
+  {
+    text: "You see a job listing for 'easy work from home, stuffing envelopes, $40/hour' — but before you can start, they ask you to pay $75 for a 'starter kit.'",
+    isScam: true,
+    explain: "A real employer pays you — they never ask you to pay them first to start a job. Any job that requires an upfront fee for supplies, training, or a 'kit' before you've even started is a scam."
+  },
+  {
+    text: "An old friend you reconnected with online keeps messaging you about a cryptocurrency investment that 'guarantees' doubling your money within a week, and encourages you to invest more each time it goes up.",
+    isScam: true,
+    explain: "No legitimate investment can 'guarantee' fast, huge returns — that promise alone is the red flag. This pattern (a new online friend pushing you toward one investment platform) is a common scam sometimes called 'pig butchering.' Walk away, no matter how convincing the chats look."
+  },
+  {
+    text: "After a hurricane makes national news, you get a call asking for a donation to help victims. The caller pressures you to pay right away using a gift card or wire transfer.",
+    isScam: true,
+    explain: "Real charities accept normal payment methods like a credit card or check, and they won't pressure you to decide on the spot. If you want to help, go directly to a well-known charity's official website yourself instead of giving out payment details over the phone."
+  },
+  {
+    text: "You get a text message saying 'IRS: You are eligible for a $1,400 refund. Claim it now at this link' with a web address you don't recognize.",
+    isScam: true,
+    explain: "The IRS does not send text messages or emails about refunds, and never asks you to 'claim' money through a link. The real IRS contacts people by mail for most matters. Delete the text and don't click anything."
+  },
+  {
+    text: "Your bank sends an automated text saying 'Did you just spend $412 at [store]? Reply YES or NO' — without asking for your card number, password, or any personal details.",
+    isScam: false,
+    explain: "This is a normal fraud-alert text that many banks use, and it's safe because it never asks for personal information — just a yes or no. If you're ever unsure, don't reply; instead call your bank directly using the number on your card."
+  },
+  {
+    text: "A caller claims to be from your electric company, saying your power will be shut off within the hour unless you pay an overdue bill immediately using a prepaid debit card.",
+    isScam: true,
+    explain: "Utility companies don't threaten same-hour shutoffs over the phone or demand payment through prepaid cards. This pressure tactic is designed to stop you from thinking it through. Hang up and call your utility company directly using the number on a past bill."
+  }
+];
+
+let current = 0;
+let score = 0;
+let answered = false;
+
+const scenarioText = document.getElementById('scenarioText');
+const btnScam = document.getElementById('btnScam');
+const btnSafe = document.getElementById('btnSafe');
+const feedback = document.getElementById('feedback');
+const feedbackTitle = document.getElementById('feedbackTitle');
+const feedbackText = document.getElementById('feedbackText');
+const nextBtn = document.getElementById('nextBtn');
+const qNum = document.getElementById('qNum');
+const qTotal = document.getElementById('qTotal');
+const dialFill = document.getElementById('dialFill');
+const dialLabel = document.getElementById('dialLabel');
+const quizCard = document.getElementById('quizCard');
+const resultsCard = document.getElementById('resultsCard');
+const finalScore = document.getElementById('finalScore');
+const finalOutOf = document.getElementById('finalOutOf');
+const finalMsg = document.getElementById('finalMsg');
+const bestNote = document.getElementById('bestNote');
+const restartBtn = document.getElementById('restartBtn');
+
+const CIRC = 2 * Math.PI * 36;
+qTotal.textContent = questions.length;
+
+function loadQuestion(){
+  answered = false;
+  const q = questions[current];
+  scenarioText.textContent = q.text;
+  qNum.textContent = current + 1;
+  feedback.classList.remove('show', 'wrong-flavor');
+  nextBtn.classList.remove('show');
+  [btnScam, btnSafe].forEach(b => {
+    b.disabled = false;
+    b.classList.remove('correct','incorrect','dim');
+  });
+  updateDial();
+}
+
+function updateDial(){
+  const frac = current / questions.length;
+  const offset = CIRC * (1 - frac);
+  dialFill.style.strokeDashoffset = offset;
+  dialLabel.textContent = score + "/" + current;
+}
+
+function handleAnswer(pickedScam){
+  if(answered) return;
+  answered = true;
+  const q = questions[current];
+  const correct = (pickedScam === q.isScam);
+  if(correct) score++;
+
+  const pickedBtn = pickedScam ? btnScam : btnSafe;
+  const otherBtn = pickedScam ? btnSafe : btnScam;
+  pickedBtn.classList.add(correct ? 'correct' : 'incorrect');
+  otherBtn.classList.add('dim');
+  btnScam.disabled = true;
+  btnSafe.disabled = true;
+
+  feedback.classList.add('show');
+  if(!correct) feedback.classList.add('wrong-flavor');
+  feedbackTitle.className = 'feedback-title ' + (correct ? 'good' : 'bad');
+  feedbackTitle.textContent = correct ? "✅ You got it." : ("You picked wrong — it's actually " + (q.isScam ? "a SCAM." : "SAFE."));
+  feedbackText.textContent = q.explain;
+
+  nextBtn.classList.add('show');
+  nextBtn.textContent = (current === questions.length - 1) ? "See your results →" : "Next question →";
+
+  const frac = (current + 1) / questions.length;
+  dialFill.style.strokeDashoffset = CIRC * (1 - frac);
+  dialLabel.textContent = score + "/" + (current + 1);
+}
+
+btnScam.addEventListener('click', () => handleAnswer(true));
+btnSafe.addEventListener('click', () => handleAnswer(false));
+
+nextBtn.addEventListener('click', () => {
+  current++;
+  if(current >= questions.length){
+    showResults();
+  } else {
+    loadQuestion();
+  }
+});
+
+async function showResults(){
+  quizCard.style.display = 'none';
+  resultsCard.classList.add('show');
+  finalScore.textContent = score;
+  finalOutOf.textContent = "out of " + questions.length + " correct";
+
+  let msg;
+  if(score === questions.length){
+    msg = "Perfect score! You've got a sharp eye for scams — the urgency, the secrecy, the strange payment requests. That instinct will protect you in real life.";
+  } else if(score >= questions.length * 0.7){
+    msg = "Really solid! You caught most of the warning signs. Take another look at the ones you missed — the details matter.";
+  } else {
+    msg = "Good start. Scams are designed to fool smart, careful people — that's the whole trick. The more situations you see, the easier the warning signs become to spot. Try again!";
+  }
+  finalMsg.textContent = msg;
+
+  try{
+    const prev = await window.storage.get('scam_spotter_best');
+    const prevBest = prev ? parseInt(prev.value, 10) : 0;
+    const newBest = Math.max(prevBest, score);
+    await window.storage.set('scam_spotter_best', String(newBest));
+    if(score > prevBest && prevBest > 0){
+      bestNote.textContent = "🎉 New best score! Previous best was " + prevBest + ".";
+    } else {
+      bestNote.textContent = "Your best score so far: " + newBest + " / " + questions.length;
+    }
+  } catch(e){
+    bestNote.textContent = "";
+  }
+}
+
+restartBtn.addEventListener('click', () => {
+  current = 0;
+  score = 0;
+  quizCard.style.display = 'block';
+  resultsCard.classList.remove('show');
+  loadQuestion();
+});
+
+loadQuestion();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>

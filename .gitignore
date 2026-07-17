@@ -1,0 +1,7 @@
+# Local environment files
+.DS_Store
+Thumbs.db
+
+# Icon files (add actual images)
+*.png
+!README.md
